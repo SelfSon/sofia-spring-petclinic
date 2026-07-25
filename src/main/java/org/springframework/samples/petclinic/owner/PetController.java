@@ -97,6 +97,13 @@ class PetController {
 		dataBinder.setDisallowedFields("id", "*.id");
 	}
 
+	/**
+	 * Shows the form for adding a new pet to the given owner.
+	 * @param owner the owner to add the pet to, resolved from the {@code ownerId} path
+	 * variable
+	 * @param model the model, populated with a new blank {@link Pet}
+	 * @return the name of the create/update pet form view
+	 */
 	@GetMapping("/pets/new")
 	public String initCreationForm(Owner owner, ModelMap model) {
 		Pet pet = new Pet();
@@ -104,6 +111,19 @@ class PetController {
 		return VIEWS_PETS_CREATE_OR_UPDATE_FORM;
 	}
 
+	/**
+	 * Creates a new pet for the given owner. Rejects the submission if the pet name
+	 * already exists for this owner (case-insensitive) or the birth date is in the
+	 * future; also falls back to rejecting on the database's
+	 * {@code unique_owner_pet_name} constraint violation in case of a race with the
+	 * in-memory duplicate check.
+	 * @param owner the owner to add the pet to
+	 * @param pet the submitted pet data
+	 * @param result validation result for {@code pet}
+	 * @param redirectAttributes used to pass a flash success message after redirect
+	 * @return the create/update pet form view on validation failure, otherwise a redirect
+	 * to the owner's detail page
+	 */
 	@PostMapping("/pets/new")
 	public String processCreationForm(Owner owner, @Valid Pet pet, BindingResult result,
 			RedirectAttributes redirectAttributes) {
@@ -136,11 +156,29 @@ class PetController {
 		return "redirect:/owners/{ownerId}";
 	}
 
+	/**
+	 * Shows the form for editing an existing pet, pre-populated via the {@code pet} model
+	 * attribute resolved from the {@code petId} path variable.
+	 * @return the name of the create/update pet form view
+	 */
 	@GetMapping("/pets/{petId}/edit")
 	public String initUpdateForm() {
 		return VIEWS_PETS_CREATE_OR_UPDATE_FORM;
 	}
 
+	/**
+	 * Updates an existing pet's details. Rejects the submission if another pet of the
+	 * same owner already has the submitted name (case-insensitive) or the birth date is
+	 * in the future; also falls back to rejecting on the database's
+	 * {@code unique_owner_pet_name} constraint violation in case of a race with the
+	 * in-memory duplicate check.
+	 * @param owner the owner whose pet is being updated
+	 * @param pet the submitted pet data
+	 * @param result validation result for {@code pet}
+	 * @param redirectAttributes used to pass a flash success message after redirect
+	 * @return the create/update pet form view on validation failure, otherwise a redirect
+	 * to the owner's detail page
+	 */
 	@PostMapping("/pets/{petId}/edit")
 	public String processUpdateForm(Owner owner, @Valid Pet pet, BindingResult result,
 			RedirectAttributes redirectAttributes) {
